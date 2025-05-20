@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build . -t ghcr.io/<org>/mini-saas2-api:${{ github.sha }}
+          docker build . -t ghcr.io/<Deploytastic-Four>/mini-saas-api:${{ github.sha }}
 
       - name: Run unit tests
         run: |
@@ -40,4 +40,4 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/<org>/mini-saas2-api:${{ github.sha }}
+          docker push ghcr.io/<Deploytastic-Four>/mini-saas-api:${{ github.sha }}
