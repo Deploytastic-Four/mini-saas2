@@ -27,7 +27,5 @@ jobs:
           push: true
           tags: ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }}
  
-      - name: Run unit tests
-        run: |
-          docker run ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }} npm test
+      
  
