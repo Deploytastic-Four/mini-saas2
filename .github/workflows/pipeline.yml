@@ -23,10 +23,11 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./api
           push: true
           tags: ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }}
  
       - name: Run unit tests
         run: |
           docker run ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }} npm test
+ 
