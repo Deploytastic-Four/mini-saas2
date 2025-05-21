@@ -1,31 +1,60 @@
 name: CI/CD Pipeline
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
- 
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
- 
-      - name: Log in to GHCR
+
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.GHCR_TOKEN }}
- 
-      - name: Build and push Docker image
+
+      - name: Build and push API Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./api
           push: true
-          tags: ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }}
- 
-      
- 
+          tags: |
+            ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:${{ github.sha }}
+            ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy on remote server via SSH
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            echo "Pulling latest Docker image..."
+            docker login ghcr.io -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.GHCR_TOKEN }}
+            docker pull ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
+
+            echo "Stopping and removing old container..."
+            docker stop mini-saas-api || true
+            docker rm mini-saas-api || true
+
+            echo "Starting new container..."
+            docker run -d --name mini-saas-api -p 3000:3000 ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
+          EOF
