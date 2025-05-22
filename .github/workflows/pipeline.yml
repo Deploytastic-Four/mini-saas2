@@ -61,7 +61,15 @@ jobs:
             docker rm mini-saas-api || true
 
             echo "Freeing port 3000 if it's in use..."
-            fuser -k 3000/tcp || true
+            if lsof -i:3000; then
+              echo "Port 3000 is in use. Killing the process..."
+              fuser -k 3000/tcp || true
+              sleep 2
+            fi
+
+            echo "Cleaning up dangling Docker containers and networks..."
+            docker container prune -f
+            docker network prune -f
 
             echo "Starting new container..."
             docker run -d --name mini-saas-api -p 3000:3000 ghcr.io/$REGISTRY_USER/mini-saas-api:latest
