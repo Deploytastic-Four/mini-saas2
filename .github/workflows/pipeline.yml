@@ -45,16 +45,24 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy on remote server via SSH
+        env:
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            echo "Pulling latest Docker image..."
-            docker login ghcr.io -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.GHCR_TOKEN }}
-            docker pull ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+            echo "Logging into GitHub Container Registry..."
+            docker login ghcr.io -u $REGISTRY_USER -p $GHCR_TOKEN
 
-            echo "Stopping and removing old container..."
+            echo "Pulling latest Docker image..."
+            docker pull ghcr.io/$REGISTRY_USER/mini-saas-api:latest
+
+            echo "Stopping and removing old container if it exists..."
             docker stop mini-saas-api || true
             docker rm mini-saas-api || true
 
+            echo "Freeing port 3000 if it's in use..."
+            fuser -k 3000/tcp || true
+
             echo "Starting new container..."
-            docker run -d --name mini-saas-api -p 3000:3000 ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
-          EOF 
+            docker run -d --name mini-saas-api -p 3000:3000 ghcr.io/$REGISTRY_USER/mini-saas-api:latest
+          EOF
