@@ -57,4 +57,4 @@ jobs:
 
             echo "Starting new container..."
             docker run -d --name mini-saas-api -p 3000:3000 ghcr.io/${{ secrets.REGISTRY_USER }}/mini-saas-api:latest
-          EOF
+          EOF 
