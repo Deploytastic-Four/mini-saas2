@@ -1,5 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
-mkdir -p /opt/backups
-export PGPASSWORD=$POSTGRES_PASSWORD
-pg_dump -U $POSTGRES_USER -h 127.0.0.1 postgres > /opt/backups/db-$(date +%F).sql
+BACKUP_DIR="$HOME/backups"
+mkdir -p "$BACKUP_DIR"
+
+echo "Backing up PostgreSQL data..."
+docker exec mini-saas2-db-1 pg_dump -U postgres postgres > "$BACKUP_DIR/postgres_backup_$(date +%F).sql"
+
+echo "Backup completed successfully!"
